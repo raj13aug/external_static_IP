@@ -12,6 +12,11 @@ resource "tls_private_key" "ssh" {
   algorithm = "RSA"
 }
 
+resource "google_compute_address" "external-static-ip" {
+  name   = "ip-${var.name}"
+  region = var.region
+}
+
 resource "google_compute_instance" "demo" {
   project = var.project_id
 
@@ -36,7 +41,7 @@ resource "google_compute_instance" "demo" {
   network_interface {
     network = "default"
     access_config {
-      // Ephemeral public IP
+      nat_ip = google_compute_address.external-static-ip.address
     }
   }
 
@@ -51,6 +56,8 @@ resource "google_compute_instance" "demo" {
     && sudo apt update -y \
     && sudo apt install postgresql-client jq iperf3 -y 
 EOT
+
+  depends_on = [google_compute_address.external-static-ip]
 
 }
 
